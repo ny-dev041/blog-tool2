@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>직접발행 요청서</title>
+<style>
+/* ============================================================
+   [ 설정 구역 ] 색·간격 등 나중에 바꿀 값은 여기 모아둠
+   ============================================================ */
+:root{
+  --bg:        #ECEEE9;
+  --surface:   #FFFFFF;
+  --surface-2: #F5F7F3;
+  --ink:       #2B322E;
+  --ink-muted: #6F776F;
+  --ink-faint: #9AA29B;
+  --accent:    #007DCC;
+  --accent-strong:#00629E;
+  --accent-soft:#E3F1FA;
+  --line:      #E0E3DC;
+  --danger:    #B4655C;
+  --warn-bg:   #FBF2E9;
+  --warn-text: #A9713B;
+  --radius:    12px;
+  --radius-sm: 8px;
+}
+*{box-sizing:border-box;}
+[hidden]{display:none !important;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Pretendard','Pretendard Variable',-apple-system,BlinkMacSystemFont,
+              'Apple SD Gothic Neo','Malgun Gothic','Segoe UI',system-ui,sans-serif;
+  background:var(--bg);color:var(--ink);font-size:15px;line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+@media (prefers-reduced-motion:no-preference){
+  a,button,summary,.suggest-item{transition:background-color .15s ease,border-color .15s ease,color .15s ease;}
+}
+
+/* 상단 */
+.appbar{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:14px 28px;background:var(--surface);border-bottom:1px solid var(--line);flex-wrap:wrap;}
+.brand{display:flex;align-items:baseline;gap:12px;min-width:0;}
+.brand h1{font-size:19px;font-weight:700;margin:0;letter-spacing:-0.01em;}
+.brand .sub{font-size:13px;color:var(--ink-muted);}
+.backup{display:flex;gap:8px;flex-shrink:0;}
+
+/* 메뉴 탭 */
+.nav{display:flex;gap:4px;}
+.nav-tab{font-family:inherit;font-size:14.5px;font-weight:600;border:0;background:transparent;color:var(--ink-muted);
+  padding:8px 16px;border-radius:var(--radius-sm);cursor:pointer;}
+.nav-tab:hover{background:var(--surface-2);}
+.nav-tab.active{background:var(--accent-soft);color:var(--accent-strong);}
+
+/* 버튼 */
+.btn{font-family:inherit;font-size:14px;font-weight:600;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:var(--radius-sm);cursor:pointer;}
+.btn:hover{background:var(--surface-2);}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+.btn-primary:hover{background:var(--accent-strong);border-color:var(--accent-strong);}
+.btn-lg{font-size:15px;padding:12px 20px;}
+.btn-sm{font-size:12.5px;padding:4px 10px;}
+.btn-danger-text{color:var(--danger);}
+
+/* 레이아웃 */
+.wrap{max-width:1240px;margin:0 auto;padding:24px 28px 56px;}
+.grid{display:grid;grid-template-columns:1.12fr 0.88fr;gap:20px;align-items:start;}
+@media (max-width:900px){ .grid{grid-template-columns:1fr;} }
+.view{display:none;}
+.view.active{display:block;}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;}
+.card + .card{margin-top:16px;}
+.card-title{font-size:13px;font-weight:600;color:var(--ink-muted);margin:0 0 12px;}
+.card-head-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+.card-head-row .card-title{margin:0;}
+
+/* 1개씩 / 묶어서 전환 */
+.seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:3px;gap:3px;}
+.seg-btn{font-family:inherit;font-size:14px;font-weight:600;border:0;background:transparent;color:var(--ink-muted);
+  padding:7px 16px;border-radius:6px;cursor:pointer;}
+.seg-btn.active{background:var(--surface);color:var(--accent-strong);box-shadow:0 1px 3px rgba(43,50,46,.12);}
+.mode-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.mode-row .note{font-size:12.5px;color:var(--ink-faint);}
+body[data-mode="single"] .batch-only{display:none !important;}
+body[data-mode="batch"] .single-only{display:none !important;}
+
+/* 접이식 */
+.weekly{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);overflow:hidden;}
+.weekly summary{list-style:none;cursor:pointer;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.weekly summary::-webkit-details-marker{display:none;}
+.weekly summary .lft{display:flex;align-items:center;gap:10px;}
+.weekly summary .chev{color:var(--ink-faint);font-size:12px;}
+.weekly[open] summary .chev{transform:rotate(90deg);}
+.weekly summary .ttl{font-weight:600;font-size:15px;}
+.weekly summary .tag{font-size:12px;color:var(--ink-muted);background:var(--surface-2);border:1px solid var(--line);border-radius:20px;padding:2px 10px;}
+.weekly-body{padding:0 18px 18px;}
+.weekly.inset{margin:16px 0 0;}
+.paste{width:100%;min-height:96px;resize:vertical;font-family:inherit;font-size:14px;line-height:1.6;
+  padding:12px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface-2);color:var(--ink);}
+.paste:focus{outline:none;border-color:var(--accent);background:#fff;}
+.action-row{display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap;}
+.action-row .note{font-size:12.5px;color:var(--ink-faint);}
+.card-desc{font-size:13px;color:var(--ink-muted);margin:0 0 10px;}
+.result-msg{font-size:13px;padding:10px 12px;border-radius:var(--radius-sm);background:var(--surface-2);color:var(--ink-muted);margin-top:12px;}
+.result-msg.ok{background:var(--accent-soft);color:var(--accent-strong);}
+.result-msg.warn{background:var(--warn-bg);color:var(--warn-text);}
+
+/* 업체 검색 */
+.search{position:relative;}
+.search input{width:100%;font-family:inherit;font-size:15.5px;color:var(--ink);
+  padding:13px 14px 13px 40px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface-2);}
+.search input:focus{outline:none;border-color:var(--accent);background:#fff;}
+.search .ico{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--ink-faint);font-size:15px;}
+.suggest{position:absolute;left:0;right:0;z-index:5;margin-top:6px;border:1px solid var(--line);border-radius:var(--radius-sm);background:#fff;overflow:hidden;
+  box-shadow:0 6px 18px rgba(43,50,46,.07);}
+.suggest-item{padding:10px 14px;font-size:14.5px;cursor:pointer;display:flex;justify-content:space-between;gap:8px;}
+.suggest-item:hover,.suggest-item.active{background:var(--accent-soft);}
+.suggest-item .alias{color:var(--ink-faint);font-size:12.5px;}
+.suggest-empty{padding:10px 14px;font-size:13px;color:var(--ink-faint);}
+
+/* 업체 미선택 상태 */
+.empty-state{padding:24px 4px;text-align:center;color:var(--ink-faint);font-size:14px;}
+
+/* 선택 업체 작업 */
+.co-title{display:flex;align-items:center;gap:10px;margin:2px 0 4px;flex-wrap:wrap;}
+.co-title h2{font-size:22px;font-weight:700;margin:0;letter-spacing:-0.01em;}
+.alias-tag{font-size:12px;color:var(--ink-muted);background:var(--surface-2);border:1px solid var(--line);border-radius:20px;padding:2px 10px;}
+.co-link-btn{display:inline-block;text-decoration:none;font-size:12.5px;font-weight:600;
+  padding:4px 10px;border:1px solid var(--line);border-radius:20px;background:var(--surface-2);color:var(--ink-muted);}
+.co-link-btn:hover{background:var(--accent-soft);color:var(--accent-strong);border-color:var(--accent);}
+.field{margin-top:16px;}
+.field > label{display:block;font-size:13px;font-weight:600;color:var(--ink-muted);margin-bottom:6px;}
+.field .help{font-size:12px;color:var(--ink-faint);font-weight:400;margin-left:6px;}
+.badge{font-size:11px;font-weight:600;padding:1px 7px;border-radius:20px;background:var(--accent-soft);color:var(--accent-strong);margin-right:4px;}
+.input,.textarea{width:100%;font-family:inherit;font-size:14.5px;color:var(--ink);line-height:1.6;
+  padding:11px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface);}
+.input:focus,.textarea:focus{outline:none;border-color:var(--accent);}
+.input.invalid{border-color:var(--danger);}
+.input.invalid:focus{border-color:var(--danger);}
+.input::placeholder,.textarea::placeholder,.paste::placeholder{color:var(--ink-faint);}
+.textarea{resize:vertical;min-height:64px;}
+.kw-warning{font-size:12.5px;color:var(--danger);margin:8px 0 0;}
+.gen-row{margin-top:22px;display:flex;align-items:center;justify-content:flex-end;gap:14px;}
+.gen-row .hint{font-size:12.5px;color:var(--ink-faint);}
+
+/* 묶음 체크창 */
+.batch-count{font-size:12.5px;font-weight:600;color:var(--accent-strong);background:var(--accent-soft);border-radius:20px;padding:2px 10px;}
+.check-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;}
+.check-empty{font-size:13px;color:var(--ink-faint);padding:6px 2px;}
+.check-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);
+  background:var(--surface);cursor:pointer;}
+.check-item:hover{background:var(--surface-2);}
+.check-item .mark{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--ink-faint);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;}
+.check-item.done .mark{background:var(--accent);border-color:var(--accent);}
+.check-item .nm{flex:1;font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.check-item.current{border-color:var(--accent);background:var(--accent-soft);}
+.check-item .state{font-size:12px;color:var(--ink-faint);}
+.check-item .x{font-size:13px;color:var(--ink-faint);cursor:pointer;padding:0 4px;}
+.check-item .x:hover{color:var(--danger);}
+.check-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;}
+
+/* 오른쪽: 완성된 요청서 */
+.right-col{position:sticky;top:24px;}
+.right-col .card{margin-bottom:16px;}
+.result{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--surface);
+  box-shadow:0 4px 16px rgba(43,50,46,.05);display:flex;flex-direction:column;min-height:420px;}
+.result-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;
+  border-bottom:1px solid var(--line);background:var(--surface);}
+.result-head .t{font-size:14px;font-weight:600;color:var(--ink);}
+.result-body{padding:18px;background:var(--surface-2);flex:1;overflow:auto;}
+.result-body pre{margin:0;white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:14px;line-height:1.75;color:var(--ink);}
+.result-foot{padding:10px 18px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-faint);background:var(--surface);}
+@media (max-width:900px){ .right-col{position:static;} }
+
+/* 업체 정보 관리: 미리보기 / 목록 */
+.badge-status{font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:20px;white-space:nowrap;}
+.st-new{background:var(--accent-soft);color:var(--accent-strong);}
+.st-update{background:#E4F1EC;color:#3F7A66;}
+.st-same{background:var(--surface-2);color:var(--ink-faint);border:1px solid var(--line);}
+.st-edited{background:var(--warn-bg);color:var(--warn-text);}
+.st-dup{background:#F3E9F5;color:#8A5A98;}
+.pv-summary{font-size:13px;color:var(--ink-muted);margin:0 0 12px;}
+.pv-list{display:flex;flex-direction:column;gap:8px;}
+.pv-row{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);}
+.pv-row.dim{opacity:.55;}
+.pv-row .nm{font-size:14.5px;font-weight:600;}
+.pv-row .sub{font-size:12.5px;color:var(--ink-faint);margin-top:2px;word-break:break-word;}
+.pv-row .note-line{font-size:12.5px;color:var(--warn-text);margin-top:4px;}
+.pv-row select{font-family:inherit;font-size:12.5px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);margin-top:6px;max-width:100%;}
+.pv-row input[type="checkbox"]{width:18px;height:18px;margin-top:3px;accent-color:var(--accent);}
+.pv-badges{display:flex;flex-direction:column;gap:4px;align-items:flex-end;}
+.co-list{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+.co-empty{font-size:13px;color:var(--ink-faint);padding:12px 2px;text-align:center;}
+.co-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);}
+.co-row .info{flex:1;min-width:0;}
+.co-row .nm{font-size:14.5px;font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.co-row .snip{font-size:12.5px;color:var(--ink-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.co-row .btns{display:flex;gap:6px;flex-shrink:0;}
+
+.footer-note{max-width:1240px;margin:14px auto 0;padding:0 28px;font-size:12.5px;color:var(--ink-faint);}
+
+/* 모달 */
+.modal-overlay{position:fixed;inset:0;background:rgba(43,50,46,.45);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50;}
+.modal{background:#fff;border-radius:var(--radius);padding:22px;width:100%;max-width:440px;max-height:90vh;overflow:auto;
+  box-shadow:0 12px 36px rgba(43,50,46,.2);}
+.modal h3{margin:0 0 14px;font-size:17px;font-weight:700;}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;}
+</style>
+</head>
+<body data-mode="single">
+
+  <header class="appbar">
+    <div class="brand">
+      <h1>직접발행 요청서</h1>
+      <span class="sub">업체를 고르면 저장된 정보를 불러와 요청서를 완성합니다</span>
+    </div>
+    <nav class="nav">
+      <button class="nav-tab active" type="button" data-view="make">요청서 만들기</button>
+      <button class="nav-tab" type="button" data-view="manage">업체 정보 관리</button>
+    </nav>
+    <div class="backup">
+      <button class="btn" type="button" id="btnExport">JSON 내보내기</button>
+      <button class="btn" type="button" id="btnImport">불러오기</button>
+      <input type="file" id="importFileInput" accept="application/json" style="display:none;">
+    </div>
+  </header>
+
+  <div class="wrap">
+
+    <!-- ================= 메뉴 1: 요청서 만들기 ================= -->
+    <section class="view active" id="view-make">
+      <div class="grid">
+
+        <!-- 왼쪽: 입력 흐름 -->
+        <div class="left-col">
+
+          <section class="card">
+            <div class="mode-row">
+              <div class="seg" role="tablist" aria-label="요청서 방식">
+                <button class="seg-btn active" type="button" data-mode="single">1개씩</button>
+                <button class="seg-btn" type="button" data-mode="batch">묶어서 (최대 10개)</button>
+              </div>
+              <span class="note single-only">업체 1개의 요청서를 바로 만들어요</span>
+              <span class="note batch-only">입력하면 자동으로 오른쪽 목록에 저장돼요</span>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-head-row">
+              <p class="card-title">업체 선택</p>
+            </div>
+            <div class="search">
+              <span class="ico">🔍</span>
+              <input type="text" id="searchInput" placeholder="업체 이름 검색" aria-label="업체 검색" autocomplete="off">
+              <div class="suggest" id="suggestBox" hidden></div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="empty-state" id="emptyState">
+              <p>업체를 검색해서 선택해주세요. 업체는 [업체 정보 관리]에서 등록해요.</p>
+            </div>
+
+            <div id="companyForm" hidden>
+              <div class="co-title">
+                <h2 id="coName">-</h2>
+                <span class="alias-tag" id="coAliasTag" hidden></span>
+                <a class="co-link-btn" id="btnBlogLink" href="#" target="_blank" rel="noopener noreferrer" hidden>블로그</a>
+                <a class="co-link-btn" id="btnPlaceLink" href="#" target="_blank" rel="noopener noreferrer" hidden>플레이스</a>
+              </div>
+
+              <div class="field">
+                <label><span class="badge">요청서 포함</span> 새 키워드</label>
+                <input class="input" type="text" id="kwInput" placeholder="새 키워드 입력 (1개)" autocomplete="off">
+                <p class="kw-warning" id="kwWarning" hidden>새 키워드를 입력해주세요.</p>
+              </div>
+
+              <div class="field">
+                <label>추가 입력 <span class="help">이번 요청에만 들어갈 내용</span></label>
+                <textarea class="textarea" id="extraInput" rows="3" placeholder="이벤트 내용, 타겟 고객, 요청 사항 등을 적어주세요!"></textarea>
+              </div>
+
+              <details class="weekly inset">
+                <summary>
+                  <span class="lft"><span class="chev">▶</span><span class="ttl">업체 설문</span></span>
+                  <span class="tag">고정 정보 · 업체 정보 관리에서 수정</span>
+                </summary>
+                <div class="weekly-body">
+                  <textarea class="paste" id="surveyView" rows="3" readonly placeholder="저장된 업체 설문이 여기에 표시돼요"></textarea>
+                </div>
+              </details>
+
+              <details class="weekly inset">
+                <summary>
+                  <span class="lft"><span class="chev">▶</span><span class="ttl">추가 업체정보</span></span>
+                  <span class="tag">요청서에 포함 · 업체 정보 관리에서 수정</span>
+                </summary>
+                <div class="weekly-body">
+                  <textarea class="paste" id="extraInfoView" rows="3" readonly placeholder="저장된 추가 업체정보가 없어요"></textarea>
+                </div>
+              </details>
+
+              <div class="gen-row single-only">
+                <span class="hint">저장된 정보 + 위 입력을 양식에 채워 완성합니다</span>
+                <button class="btn btn-primary btn-lg" type="button" id="btnGenerate">요청서 생성</button>
+              </div>
+              <div class="gen-row batch-only">
+                <span class="hint">키워드를 입력하면 자동으로 묶음 목록에 담겨요</span>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- 오른쪽 -->
+        <div class="right-col">
+
+          <!-- 묶어서 모드에서만: 업체 체크창 -->
+          <section class="card batch-only">
+            <div class="card-head-row">
+              <p class="card-title">묶음 목록</p>
+              <span class="batch-count" id="batchCount">0 / 10</span>
+            </div>
+            <ul class="check-list" id="batchList"></ul>
+            <p class="kw-warning" id="batchWarning" hidden></p>
+            <div class="check-foot">
+              <button class="btn btn-sm btn-danger-text" type="button" id="btnBatchClear">전체 비우기</button>
+              <button class="btn btn-primary" type="button" id="btnBatchGenerate">묶음 요청서 생성</button>
+            </div>
+          </section>
+
+          <div class="result">
+            <div class="result-head">
+              <span class="t">완성된 요청서</span>
+              <button class="btn" type="button" id="btnCopy">📋 복사</button>
+            </div>
+            <div class="result-body">
+<pre id="resultOutput">[요청서 생성]을 누르면 여기에 완성된 요청서가 표시됩니다.</pre>
+            </div>
+            <div class="result-foot">생성 후 ‘복사’ 한 번이면 클로드에 붙여넣을 준비 끝</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================= 메뉴 2: 업체 정보 관리 ================= -->
+    <section class="view" id="view-manage">
+      <div class="grid">
+
+        <!-- 왼쪽: 설문 일괄 입력 + 미리보기 -->
+        <div class="left-col">
+
+          <section class="card">
+            <div class="card-head-row">
+              <p class="card-title">업체 설문 일괄 입력</p>
+              <span class="alias-tag">업체명 | 업체설문</span>
+            </div>
+            <p class="card-desc">구글시트에서 업체명 | 업체설문 2칸을 복사해 붙여넣으면, 저장 전에 미리보기로 먼저 확인할 수 있어요. 시트에 없는 기존 업체는 그대로 유지돼요.</p>
+            <textarea class="paste" id="pasteInput" placeholder="여기에 시트 내용 붙여넣기…&#10;(업체명 → 업체설문 순서의 2칸)"></textarea>
+            <div class="action-row">
+              <button class="btn btn-primary" type="button" id="btnPreview">미리보기</button>
+              <span class="note">같은 업체가 여러 줄이면 아래쪽 줄이 기본으로 선택돼요</span>
+            </div>
+            <div class="result-msg" id="importMsg" hidden></div>
+          </section>
+
+          <section class="card" id="previewCard" hidden>
+            <div class="card-head-row">
+              <p class="card-title">저장 전 미리보기</p>
+            </div>
+            <p class="pv-summary" id="pvSummary"></p>
+            <div class="pv-list" id="pvList"></div>
+            <div class="action-row" style="justify-content:flex-end;">
+              <button class="btn btn-primary" type="button" id="btnSaveImport">선택한 업체 저장</button>
+            </div>
+          </section>
+        </div>
+
+        <!-- 오른쪽: 업체 목록 -->
+        <div class="right-col">
+          <section class="card">
+            <div class="card-head-row">
+              <p class="card-title">업체 목록 <span class="batch-count" id="coCount" style="margin-left:6px;">전체 0개</span></p>
+              <button class="btn" type="button" id="btnOpenAdd">+ 업체 추가</button>
+            </div>
+            <div class="search">
+              <span class="ico">🔍</span>
+              <input type="text" id="coSearch" placeholder="업체 이름 검색" aria-label="업체 목록 검색" autocomplete="off">
+            </div>
+            <div class="co-list" id="coList"></div>
+          </section>
+        </div>
+
+      </div>
+    </section>
+
+    <p class="footer-note">모든 업체 정보는 이 브라우저의 localStorage에만 저장됩니다 · [JSON 내보내기]로 주기적으로 백업해주세요</p>
+  </div>
+
+  <!-- 업체 추가/수정 모달 -->
+  <div class="modal-overlay" id="modalOverlay" hidden>
+    <div class="modal">
+      <h3 id="modalTitle">업체 추가</h3>
+      <div class="field" style="margin-top:0;">
+        <label>업체명 <span class="help">정식 이름</span></label>
+        <input class="input" type="text" id="modalName" placeholder="예: 업체명 예시">
+      </div>
+      <div class="field">
+        <label>별칭 <span class="help">검색에서 함께 찾을 이름 (선택)</span></label>
+        <input class="input" type="text" id="modalAlias" placeholder="예: 별칭 예시">
+      </div>
+      <div class="field">
+        <label>업체 설문 <span class="help">거의 안 바뀌는 고정 정보</span></label>
+        <textarea class="textarea" id="modalSurvey" rows="3" placeholder="타깃 / 톤 / 주력 등"></textarea>
+      </div>
+      <div class="field">
+        <label>추가 업체정보 <span class="help">요청서에 함께 들어가는 정보 (선택)</span></label>
+        <textarea class="textarea" id="modalExtraInfo" rows="3" placeholder="설문 외에 따로 알려줄 업체 정보"></textarea>
+      </div>
+      <div class="field">
+        <label>블로그 링크 <span class="help">선택 입력</span></label>
+        <input class="input" type="text" id="modalBlogUrl" placeholder="https://blog.naver.com/...">
+      </div>
+      <div class="field">
+        <label>플레이스 링크 <span class="help">선택 입력</span></label>
+        <input class="input" type="text" id="modalPlaceUrl" placeholder="https://map.naver.com/...">
+      </div>
+      <div class="modal-actions">
+        <button class="btn" type="button" id="modalCancel">취소</button>
+        <button class="btn btn-primary" type="button" id="modalSave">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 확인/알림 모달 (브라우저 기본 confirm·alert 대신 사용) -->
+  <div class="modal-overlay" id="confirmOverlay" hidden>
+    <div class="modal">
+      <h3>확인</h3>
+      <p id="confirmMessage" style="white-space:pre-line;font-size:14px;color:var(--ink);margin:0;"></p>
+      <div class="modal-actions">
+        <button class="btn" type="button" id="confirmCancelBtn">취소</button>
+        <button class="btn btn-primary" type="button" id="confirmOkBtn">확인</button>
+      </div>
+    </div>
+  </div>
+
+<script src="app.js"></script>
+</body>
+</html>
